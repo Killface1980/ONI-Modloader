@@ -15,7 +15,7 @@
         private Dictionary<string, SerializeableVector2> _windowPositions;
 
         private Dictionary<string, SerializeableVector2> WindowPositions =>
-        this._windowPositions ?? (this._windowPositions = this.LoadFile());
+        this._windowPositions ?? (this._windowPositions = this.LoadSerializableVector2());
 
         public bool LoadWindowPosition(GameObject window, out Vector2 position)
         {
@@ -25,7 +25,7 @@
                 return false;
             }
 
-            string key = this.ExtractKey(window);
+            string key = this.GetWindowName(window);
 
             bool result = this.WindowPositions.TryGetValue(key, out SerializeableVector2 sVector2);
 
@@ -36,16 +36,16 @@
 
         public void SaveWindowPosition(GameObject window, Vector2 position)
         {
-            string key = this.ExtractKey(window);
+            string key = this.GetWindowName(window);
 
             this.WindowPositions[key] = this.VectorToTuple(position);
 
             this.UpdateFile();
         }
 
-        private string ExtractKey(GameObject window) => window.name;
+        private string GetWindowName(GameObject window) => window.name;
 
-        private Dictionary<string, SerializeableVector2> LoadFile()
+        private Dictionary<string, SerializeableVector2> LoadSerializableVector2()
         {
             try
             {

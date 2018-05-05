@@ -23,7 +23,7 @@
             this.InitializeManagers(jsonManager);
         }
 
-        public bool TryLoadConfiguratorState(out MaterialColorState state)
+        public bool TryLoadConfiguratorState(out ModSettings state)
         {
             try
             {
@@ -39,7 +39,8 @@
 
                 Debug.LogError(Message);
 
-                state = new MaterialColorState();
+             //   state = new ModSettings();
+                state = null;
 
                 return false;
             }

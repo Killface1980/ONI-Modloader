@@ -34,6 +34,11 @@
                 {
                     foreach (FileInfo file in assmeblies.GetFiles("*.dll"))
                     {
+                        if (file.Name == "0Harmony.dll")
+                        {
+                            continue;
+                        }
+
                         files.Add(file);
                     }
                 }
@@ -47,11 +52,22 @@
                 ApplyHarmonyPatches(sortedAssemblies);
                 CallOnLoadMethods(sortedAssemblies);
 
+                LoadModSettings(sortedAssemblies);
+
                 UnityEngine.Debug.Log("All mods successfully loaded!");
             }
             catch (ModLoadingException mle)
             {
                 failureMessage = mle.Message;
+            }
+        }
+
+        private static void LoadModSettings(List<Assembly> assemblies)
+        {
+            foreach (Assembly assembly in assemblies)
+            {
+                //var mod = new Mod();
+                //assembly.FullName
             }
         }
 

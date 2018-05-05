@@ -10,9 +10,13 @@
         {
         }
 
-        public MaterialColorState LoadMaterialColorState()
+        public ModSettings LoadMaterialColorState()
         {
-            return this._manager.Deserialize<MaterialColorState>(Paths.MaterialColorStatePath);
+            return this._manager.Deserialize<ModSettings>(Paths.MaterialColorStatePath);
+        }
+        public void SaveMaterialColorState(ModSettings state)
+        {
+            this._manager.Serialize(state, Paths.MaterialColorStatePath);
         }
 
         public OnionState LoadOnionState()
@@ -25,10 +29,6 @@
             return this._manager.Deserialize<TemperatureOverlayState>(Paths.TemperatureStatePath);
         }
 
-        public void SaveMaterialColorState(MaterialColorState state)
-        {
-            this._manager.Serialize(state, Paths.MaterialColorStatePath);
-        }
 
         public void SaveOnionState(OnionState state)
         {

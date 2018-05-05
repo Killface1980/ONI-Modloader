@@ -1,4 +1,7 @@
-﻿namespace MaterialColor.Extensions
+﻿using System.Collections.Generic;
+using ONI_Common.Json;
+
+namespace MaterialColor.Extensions
 {
     using JetBrains.Annotations;
 
@@ -15,7 +18,7 @@
         {
             if (!ColorHelper.TryGetTypeStandardColor(objectTypeName, out Color32 typeStandardColor))
             {
-                if (State.ConfiguratorState.ShowMissingTypeColorOffsets)
+                if (HarmonyPatches.ConfiguratorState.ShowMissingTypeColorOffsets)
                 {
                     Debug.LogError($"Can't find <{objectTypeName}> type color");
                     return typeStandardColor;
@@ -24,7 +27,7 @@
 
             Color32 colorOffsetForWhite = typeStandardColor.TintToWhite();
 
-            if (State.ConfiguratorState.ShowBuildingsAsWhite)
+            if (HarmonyPatches.ConfiguratorState.ShowBuildingsAsWhite)
             {
                 return colorOffsetForWhite;
             }
@@ -37,16 +40,51 @@
 
             return materialColor;
         }
+        private static Dictionary<SimHashes, ElementColorInfo> _elementColorInfos;
+        [NotNull]
+        private static readonly JsonFileLoader JsonLoader = new JsonFileLoader(new JsonManager(), Logger);
+        [NotNull]
+        public static ONI_Common.IO.Logger Logger => _logger ?? (_logger = new ONI_Common.IO.Logger(Paths.MaterialColorLogFileName));
+        private static ONI_Common.IO.Logger _logger;
+        public static bool TryReloadElementColorInfos()
+        {
+            if (!JsonLoader.TryLoadElementColorInfos(out Dictionary<SimHashes, ElementColorInfo> colorInfos))
+            {
+                return false;
+            }
+
+            ElementColorInfos = colorInfos;
+
+            return true;
+        }
+        [NotNull]
+        public static Dictionary<SimHashes, ElementColorInfo> ElementColorInfos
+        {
+            get
+            {
+                if (_elementColorInfos != null)
+                {
+                    return _elementColorInfos;
+                }
+
+                // Dictionary<SimHashes, ElementColorInfo> colorInfos;
+                JsonLoader.TryLoadElementColorInfos(out _elementColorInfos);
+
+                return _elementColorInfos;
+            }
+
+            private set => _elementColorInfos = value;
+        }
 
         [NotNull]
         public static ElementColorInfo GetMaterialColorInfo(this SimHashes materialHash)
         {
-            if (State.ElementColorInfos.TryGetValue(materialHash, out ElementColorInfo elementColorInfo))
+            if (ElementColorInfos.TryGetValue(materialHash, out ElementColorInfo elementColorInfo))
             {
                 return elementColorInfo;
             }
 
-            if (!State.ConfiguratorState.ShowMissingElementColorInfos)
+            if (!HarmonyPatches.ConfiguratorState.ShowMissingElementColorInfos)
             {
                 return new ElementColorInfo(Color32Multiplier.One);
             }

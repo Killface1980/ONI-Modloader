@@ -1,4 +1,7 @@
-﻿namespace MaterialColor
+﻿using ModLoader;
+using ONI_Common.Json;
+
+namespace MaterialColor
 {
     using Core.IO;
     using Harmony;
@@ -45,8 +48,8 @@
             // catch (Exception e)
             // {
             // var message = "Injection failed\n" + e.Message + '\n';
-            // State.Logger.Log(message);
-            // State.Logger.Log(e);
+            // SimHashesExtensions.Logger.Log(message);
+            // SimHashesExtensions.Logger.Log(e);
             // Debug.LogError(message);
             // }
             // try
@@ -60,8 +63,8 @@
             // }
             // catch (Exception e)
             // {
-            // State.Logger.Log("Custom temperature overlay init error");
-            // State.Logger.Log(e);
+            // SimHashesExtensions.Logger.Log("Custom temperature overlay init error");
+            // SimHashesExtensions.Logger.Log(e);
             // }
         }
 
@@ -70,17 +73,51 @@
             UpdateBuildingsColors();
             RebuildAllTiles();
         }
+        private static ModSettings _configuratorState;
+
+        public static bool TryReloadConfiguratorState()
+        {
+            if (!JsonLoader.TryLoadConfiguratorState(out ModSettings state))
+            {
+                return false;
+            }
+
+            ConfiguratorState =  state;
+
+            return true;
+        }
+
+        [NotNull]
+        public static ModSettings ConfiguratorState
+        {
+            get
+            {
+                if (_configuratorState != null)
+                {
+                    return _configuratorState;
+                }
+
+                if (!JsonLoader.TryLoadConfiguratorState(out ModSettings state))
+                {
+                    state = new ModSettings();
+                }
+                _configuratorState =  state;
+                return _configuratorState;
+            }
+
+            private set => _configuratorState = value;
+        }
 
         public static void UpdateBuildingColor(BuildingComplete building)
         {
-            string    buildingName = building.name.Replace("Complete", string.Empty);
+            string    buildingName = building.name.Replace("Complete", String.Empty);
             SimHashes material     = MaterialHelper.ExtractMaterial(building);
 
             Color32 color;
 
-            if (State.ConfiguratorState.Enabled)
+            if (ConfiguratorState.Enabled)
             {
-                switch (State.ConfiguratorState.ColorMode)
+                switch (ConfiguratorState.ColorMode)
                 {
                     case ColorMode.Json:
                         color = material.GetMaterialColorForType(buildingName);
@@ -115,8 +152,8 @@
                 }
                 catch (Exception e)
                 {
-                    State.Logger.Log("Error while aquiring cell color");
-                    State.Logger.Log(e);
+                    SimHashesExtensions.Logger.Log("Error while aquiring cell color");
+                    SimHashesExtensions.Logger.Log(e);
                 }
             }
 
@@ -191,7 +228,7 @@
                 string  message = SimDebugView.Instance.temperatureThresholds[i].value.ToString();
                 Color32 color   = SimDebugView.Instance.temperatureThresholds[i].color;
 
-                State.Logger.Log("Temperature Color " + i + " at " + message + " K: " + color);
+                SimHashesExtensions.Logger.Log("Temperature Color " + i + " at " + message + " K: " + color);
             }
         }
 
@@ -203,12 +240,12 @@
 
             try
             {
-                reloadColorInfosResult = State.TryReloadElementColorInfos();
+                reloadColorInfosResult = SimHashesExtensions.TryReloadElementColorInfos();
             }
             catch (Exception ex)
             {
-                State.Logger.Log("ReloadElementColorInfos failed.");
-                State.Logger.Log(ex);
+                SimHashesExtensions.Logger.Log("ReloadElementColorInfos failed.");
+                SimHashesExtensions.Logger.Log(ex);
             }
 
             if (reloadColorInfosResult)
@@ -217,18 +254,18 @@
 
                 const string message = "Element color infos changed.";
 
-                State.Logger.Log(message);
+                SimHashesExtensions.Logger.Log(message);
                 Debug.LogError(message);
             }
             else
             {
-                State.Logger.Log("Reload element color infos failed");
+                SimHashesExtensions.Logger.Log("Reload element color infos failed");
             }
         }
 
         private static void OnMaterialStateChanged(object sender, FileSystemEventArgs e)
         {
-            if (!State.TryReloadConfiguratorState())
+            if (!TryReloadConfiguratorState())
             {
                 return;
             }
@@ -237,7 +274,7 @@
 
             const string message = "Configurator state changed.";
 
-            State.Logger.Log(message);
+            SimHashesExtensions.Logger.Log(message);
             Debug.LogError(message);
         }
 
@@ -246,7 +283,7 @@
         {
             string message;
 
-            if (State.TryReloadTemperatureState())
+            if (TryReloadTemperatureState())
             {
                 UpdateTemperatureThresholds();
                 message = "Temperature overlay state changed.";
@@ -256,13 +293,43 @@
                 message = "Temperature overlay state load failed.";
             }
 
-            State.Logger.Log(message);
+            SimHashesExtensions.Logger.Log(message);
             Debug.LogError(message);
+        }
+        public static bool TryReloadTypeColorOffsets()
+        {
+            if (!JsonLoader.TryLoadTypeColorOffsets(out Dictionary<string, Color32> colorOffsets))
+            {
+                return false;
+            }
+
+            TypeColorOffsets = colorOffsets;
+
+            return true;
+        }
+        private static Dictionary<string, Color32> _typeColorOffsets;
+
+        [NotNull]
+        public static Dictionary<string, Color32> TypeColorOffsets
+        {
+            get
+            {
+                if (_typeColorOffsets != null)
+                {
+                    return _typeColorOffsets;
+                }
+
+                JsonLoader.TryLoadTypeColorOffsets(out _typeColorOffsets);
+
+                return _typeColorOffsets;
+            }
+
+            private set => _typeColorOffsets = value;
         }
 
         private static void OnTypeColorOffsetsChanged(object sender, FileSystemEventArgs e)
         {
-            if (!State.TryReloadTypeColorOffsets())
+            if (!TryReloadTypeColorOffsets())
             {
                 return;
             }
@@ -271,7 +338,7 @@
 
             const string message = "Type colors changed.";
 
-            State.Logger.Log(message);
+            SimHashesExtensions.Logger.Log(message);
             Debug.LogError(message);
         }
 
@@ -282,7 +349,7 @@
                 World.Instance.blockTileRenderer.Rebuild(ObjectLayer.FoundationTile, i);
             }
 
-            State.Logger.Log("All tiles rebuilt.");
+            SimHashesExtensions.Logger.Log("All tiles rebuilt.");
         }
 
         private static void SaveTemperatureThresholdsAsDefault()
@@ -291,11 +358,15 @@
             {
                 foreach (SimDebugView.ColorThreshold threshold in SimDebugView.Instance?.temperatureThresholds)
                 {
-                    State.DefaultTemperatureColors.Add(threshold.color);
-                    State.DefaultTemperatures.Add(threshold.value);
+                    DefaultTemperatureColors.Add(threshold.color);
+                    DefaultTemperatures.Add(threshold.value);
                 }
             }
         }
+        [NotNull]
+        public static readonly List<Color> DefaultTemperatureColors = new List<Color>();
+        [NotNull]
+        public static readonly List<float> DefaultTemperatures = new List<float>();
 
         private static void SetFilteredStorageColors(
         [NotNull] FilteredStorage storage,
@@ -327,7 +398,7 @@
                                                   Paths.MaterialConfigPath,
                                                   OnMaterialStateChanged);
 
-                if (State.TemperatureOverlayState.CustomRangesEnabled)
+                if (TemperatureOverlayState.CustomRangesEnabled)
                 {
                     FileChangeNotifier.StartFileWatch(
                                                       Paths.TemperatureStateFileName,
@@ -337,14 +408,14 @@
             }
             catch (Exception e)
             {
-                State.Logger.Log("SubscribeToFileChangeNotifier failed");
-                State.Logger.Log(e);
+                SimHashesExtensions.Logger.Log("SubscribeToFileChangeNotifier failed");
+                SimHashesExtensions.Logger.Log(e);
             }
         }
 
         private static void UpdateBuildingsColors()
         {
-            State.Logger.Log($"Trying to update {Components.BuildingCompletes.Count} buildings.");
+            SimHashesExtensions.Logger.Log($"Trying to update {Components.BuildingCompletes.Count} buildings.");
 
             try
             {
@@ -353,24 +424,61 @@
                     OnBuildingsCompletesAdd(building);
                 }
 
-                State.Logger.Log("Buildings updated successfully.");
+                SimHashesExtensions.Logger.Log("Buildings updated successfully.");
             }
             catch (Exception e)
             {
-                State.Logger.Log("Buildings colors update failed.");
-                State.Logger.Log(e);
+                SimHashesExtensions.Logger.Log("Buildings colors update failed.");
+                SimHashesExtensions.Logger.Log(e);
             }
+        }
+        public static bool TryReloadTemperatureState()
+        {
+            if (!JsonLoader.TryLoadTemperatureState(out TemperatureOverlayState temperatureState))
+            {
+                return false;
+            }
+
+            TemperatureOverlayState = temperatureState;
+
+            return true;
+        }
+        private static TemperatureOverlayState _temperatureOvelayState;
+        private static ONI_Common.IO.Logger _logger;
+
+        [NotNull]
+        public static ONI_Common.IO.Logger Logger => _logger ?? (_logger = new ONI_Common.IO.Logger(Paths.MaterialColorLogFileName));
+
+        [NotNull]
+        private static readonly JsonFileLoader JsonLoader = new JsonFileLoader(new JsonManager(), Logger);
+
+        [NotNull]
+        public static TemperatureOverlayState TemperatureOverlayState
+        {
+            get
+            {
+                if (_temperatureOvelayState != null)
+                {
+                    return _temperatureOvelayState;
+                }
+
+                JsonLoader.TryLoadTemperatureState(out _temperatureOvelayState);
+
+                return _temperatureOvelayState;
+            }
+
+            private set => _temperatureOvelayState = value;
         }
 
         private static void UpdateTemperatureThresholds()
         {
-            List<float> newTemperatures = State.TemperatureOverlayState.CustomRangesEnabled
-                                          ? State.TemperatureOverlayState.Temperatures
-                                          : State.DefaultTemperatures;
+            List<float> newTemperatures = TemperatureOverlayState.CustomRangesEnabled
+                                          ? TemperatureOverlayState.Temperatures
+                                          : DefaultTemperatures;
 
-            List<Color> newColors = State.TemperatureOverlayState.CustomRangesEnabled
-                                    ? State.TemperatureOverlayState.Colors
-                                    : State.DefaultTemperatureColors;
+            List<Color> newColors = TemperatureOverlayState.CustomRangesEnabled
+                                    ? TemperatureOverlayState.Colors
+                                    : DefaultTemperatureColors;
 
             for (int i = 0; i < newTemperatures.Count; i++)
             {
@@ -393,11 +501,11 @@
                 {
                     Color tileColor;
 
-                    if (State.ConfiguratorState.Enabled)
+                    if (ConfiguratorState.Enabled)
                     {
-                        if (State.ConfiguratorState.LegacyTileColorHandling)
+                        if (ConfiguratorState.LegacyTileColorHandling)
                         {
-                            switch (State.ConfiguratorState.ColorMode)
+                            switch (ConfiguratorState.ColorMode)
                             {
                                 case ColorMode.Json:
                                     tileColor = ColorHelper.GetCellColorJson(cell);
@@ -452,8 +560,8 @@
                 }
                 catch (Exception e)
                 {
-                    State.Logger.Log("EnterCell failed.");
-                    State.Logger.Log(e);
+                    SimHashesExtensions.Logger.Log("EnterCell failed.");
+                    SimHashesExtensions.Logger.Log(e);
                 }
 
                 return true;
@@ -492,8 +600,8 @@
                 }
                 catch (Exception e)
                 {
-                    State.Logger.Log("EnterEveryUpdate failed.");
-                    State.Logger.Log(e);
+                    SimHashesExtensions.Logger.Log("EnterEveryUpdate failed.");
+                    SimHashesExtensions.Logger.Log(e);
                 }
             }
         }
@@ -528,7 +636,7 @@
                 }
                 catch (Exception e)
                 {
-                    State.Logger.Log("Keybindings failed:\n" + e);
+                    SimHashesExtensions.Logger.Log("Keybindings failed:\n" + e);
                     throw;
                 }
             }
@@ -545,7 +653,7 @@
                                                                "Toggle MaterialColor",
                                                                "overlay_materialcolor",
                                                                (SimViewMode)IDs.ToggleMaterialColorOverlayID,
-                                                               string.Empty,
+                                                               String.Empty,
                                                                (Action)IDs.ToggleMaterialColorOverlayAction,
                                                                "Toggles MaterialColor overlay",
                                                                "MaterialColor") {
@@ -578,8 +686,8 @@
                 }
                 catch (Exception e)
                 {
-                    State.Logger.Log("OverlayChangedEntry failed");
-                    State.Logger.Log(e);
+                    SimHashesExtensions.Logger.Log("OverlayChangedEntry failed");
+                    SimHashesExtensions.Logger.Log(e);
                 }
             }
         }
@@ -602,7 +710,7 @@
                         return true;
                     }
 
-                    State.ConfiguratorState.Enabled = !State.ConfiguratorState.Enabled;
+                    ConfiguratorState.Enabled = !ConfiguratorState.Enabled;
 
                     RefreshMaterialColor();
 
@@ -610,8 +718,8 @@
                 }
                 catch (Exception e)
                 {
-                    State.Logger.Log("EnterToggle failed.");
-                    State.Logger.Log(e);
+                    SimHashesExtensions.Logger.Log("EnterToggle failed.");
+                    SimHashesExtensions.Logger.Log(e);
                     return true;
                 }
             }
@@ -642,8 +750,8 @@
                     {
                         string message = "Injection failed\n" + e.Message + '\n';
 
-                        State.Logger.Log(message);
-                        State.Logger.Log(e);
+                        SimHashesExtensions.Logger.Log(message);
+                        SimHashesExtensions.Logger.Log(e);
 
                         Debug.LogError(message);
                     }
@@ -653,7 +761,7 @@
                     {
                         SaveTemperatureThresholdsAsDefault();
 
-                        if (State.TemperatureOverlayState.LogThresholds)
+                        if (TemperatureOverlayState.LogThresholds)
                         {
                             LogTemperatureThresholds();
                         }
@@ -662,8 +770,8 @@
                     }
                     catch (Exception e)
                     {
-                        State.Logger.Log("Custom temperature overlay init error");
-                        State.Logger.Log(e);
+                        SimHashesExtensions.Logger.Log("Custom temperature overlay init error");
+                        SimHashesExtensions.Logger.Log(e);
                     }
                 }
             }

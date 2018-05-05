@@ -12,12 +12,26 @@ namespace ImprovedGasColourMod
         public static class ImprovedGasOverlayMod
         {
             public const float EarPopFloat = 2.5f;
+            public static float GasPressureStart { get; set; } = 0.1f;
+            public static float GasPressureEnd
+            {
+                get
+                {
+                    return _gasPressureEnd;
+                }
+
+                set
+                {
+                    _gasPressureEnd = _gasPressureEnd <= 0 ? float.Epsilon : value;
+                }
+            }
+            private static float _gasPressureEnd = 2.5f;
 
             public static bool Prefix(int cell, ref Color __result)
             {
               //  ModSettings settings = ONI_Common.ModdyMcModscreen
-                float minMass = ONI_Common.State.ConfiguratorState.GasPressureStart;
-                float maxMass = ONI_Common.State.ConfiguratorState.GasPressureEnd;
+                float minMass = GasPressureStart;
+                float maxMass = GasPressureEnd;
 
                 Element element = Grid.Element[cell];
 
@@ -110,10 +124,11 @@ namespace ImprovedGasColourMod
 
                 return overlayColor;
             }
+            public static float MinimumGasColorIntensity { get; set; } = 0.25f;
 
             private static float GetGasColorIntensity(float mass, float maxMass)
             {
-                float minIntensity = ONI_Common.State.ConfiguratorState.MinimumGasColorIntensity;
+                float minIntensity = MinimumGasColorIntensity;
 
                 float intensity = mass / maxMass;
 

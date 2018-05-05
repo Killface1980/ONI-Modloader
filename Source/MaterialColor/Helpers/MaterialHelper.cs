@@ -1,4 +1,6 @@
-﻿namespace MaterialColor.Helpers
+﻿using MaterialColor.Extensions;
+
+namespace MaterialColor.Helpers
 {
     using System;
 
@@ -15,7 +17,7 @@
                 return primaryElement.ElementID;
             }
 
-            ONI_Common.State.Logger.Log("PrimaryElement not found in: " + component);
+           SimHashesExtensions.Logger.Log("PrimaryElement not found in: " + component);
             return SimHashes.Vacuum;
         }
 
@@ -36,7 +38,7 @@
                 return element.id;
             }
 
-            ONI_Common.State.Logger.Log("Element from cell failed.");
+           SimHashesExtensions.Logger.Log("Element from cell failed.");
 
             return SimHashes.Vacuum;
         }
@@ -49,8 +51,8 @@
             }
             catch (Exception e)
             {
-                ONI_Common.State.Logger.Log("Cell or element index from index failed");
-                ONI_Common.State.Logger.Log(e);
+               SimHashesExtensions.Logger.Log("Cell or element index from index failed");
+               SimHashesExtensions.Logger.Log(e);
             }
 
             return SimHashes.Vacuum;

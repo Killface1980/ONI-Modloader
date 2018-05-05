@@ -57,6 +57,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Settings.cs" />
     <Compile Include="TemperatureOverlay\ColorThresholdTemperatureSorter.cs" />
     <Compile Include="Helpers\ColorHelper.cs" />
     <None Include="..\..\Mods\MaterialColor\Config\ElementColorInfos\00-solid.json">
@@ -114,7 +115,6 @@
       <Link>Config\TemperatureOverlayState.json</Link>
     </None>
     <None Include="ColorHelper_Patched.cs" />
-    <None Include="Extensions\Class1.cs" />
     <Compile Include="Harmony\HarmonyPatches.cs" />
     <Compile Include="Extensions\Color32Extensions.cs" />
     <Compile Include="Helpers\MaterialHelper.cs" />
